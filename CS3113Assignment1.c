@@ -67,13 +67,11 @@ int main() {
 
     // Create 4 child processes
     pid_t pids[4];
-    int counters[4]; // Array to hold counters
 
     pids[0] = fork();
     if (pids[0] == 0) {
         process1(total);
-        counters[0] = *total; // Store counter for Process 1
-        printf("From Process 1: counter = %d.\n", counters[0]);
+        printf("From Process 1: counter = %d.\n", *total);
         sem_post(sem1); // Signal process 2
         exit(0);
     }
@@ -82,8 +80,7 @@ int main() {
     if (pids[1] == 0) {
         sem_wait(sem1); // Wait for process 1 to finish
         process2(total);
-        counters[1] = *total; // Store counter for Process 2
-        printf("From Process 2: counter = %d.\n", counters[1]);
+        printf("From Process 2: counter = %d.\n", *total);
         sem_post(sem2); // Signal process 3
         exit(0);
     }
@@ -92,8 +89,7 @@ int main() {
     if (pids[2] == 0) {
         sem_wait(sem2); // Wait for process 2 to finish
         process3(total);
-        counters[2] = *total; // Store counter for Process 3
-        printf("From Process 3: counter = %d.\n", counters[2]);
+        printf("From Process 3: counter = %d.\n", *total);
         sem_post(sem3); // Signal process 4
         exit(0);
     }
@@ -102,20 +98,23 @@ int main() {
     if (pids[3] == 0) {
         sem_wait(sem3); // Wait for process 3 to finish
         process4(total);
-        counters[3] = *total; // Store counter for Process 4
-        printf("From Process 4: counter = %d.\n", counters[3]);
+        printf("From Process 4: counter = %d.\n", *total);
         exit(0);
     }
 
-    // Parent process waits for each child to finish
+    // Parent process waits for each child to finish before printing exit messages
     for (int i = 0; i < 4; i++) {
-        int status;
-        pid_t child_pid = wait(&status);
-        printf("Child with ID: %d has just exited.\n", child_pid);
+        wait(NULL); // Wait for each child process to finish
     }
 
-    // Print final counters after all child processes have exited
-    printf("Final total counter = %d.\n", *total);
+    // Final output of exit messages for each child process
+    for (int i = 0; i < 4; i++) {
+        printf("Child with ID: %d has just exited.\n", pids[i]);
+    }
+
+    // Detach and remove the shared memory
+    shmdt(total);
+    shmctl(shmid, IPC_RMID, NULL);
 
     // Close and unlink semaphores
     sem_close(sem1);
@@ -125,13 +124,8 @@ int main() {
     sem_unlink("sem2");
     sem_unlink("sem3");
 
-    // Detach and remove the shared memory
-    shmdt(total);
-    shmctl(shmid, IPC_RMID, NULL);
-
     printf("End of Simulation.\n");
 
     return 0;
 }
-
 
