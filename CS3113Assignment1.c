@@ -105,9 +105,13 @@ int main() {
         exit(0);
     }
 
-    // Parent process waits for each child to finish before printing exit messages
+    // Parent process waits for each child to finish
     for (int i = 0; i < 4; i++) {
         wait(NULL); // Wait for each child process to finish
+    }
+
+    // Final output of child IDs after all counters are printed
+    for (int i = 0; i < 4; i++) {
         printf("Child with ID: %d has just exited.\n", pids[i]);
     }
 
