@@ -11,6 +11,9 @@
 
 #define SHM_KEY 12345 // Shared memory key
 
+// Your Name: Roberto Cervantes
+// Username: [Your Username Here]
+
 void process1(int *total) {
     for (int i = 0; i < 100000; i++) {
         (*total)++;
@@ -105,10 +108,6 @@ int main() {
     // Parent process waits for each child to finish before printing exit messages
     for (int i = 0; i < 4; i++) {
         wait(NULL); // Wait for each child process to finish
-    }
-
-    // Final output of exit messages for each child process
-    for (int i = 0; i < 4; i++) {
         printf("Child with ID: %d has just exited.\n", pids[i]);
     }
 
@@ -128,6 +127,5 @@ int main() {
 
     return 0;
 }
-
 
 
