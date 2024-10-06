@@ -5,6 +5,8 @@ Shared Memory Counter Project
 Project Overview
 This project implements a shared memory counter in C, utilizing POSIX shared memory for inter-process communication. The objective is to create four child processes that concurrently modify a shared variable while ensuring synchronization and controlled output. The parent process coordinates the output to maintain a specified order.
 
+This program creates multiple child processes that share a variable named "total." Each child increments "total" by different amounts: 100,000, 200,000, 300,000, and 500,000. The parent process waits for all children to finish, printing each child’s process ID upon completion. Once all children have terminated, the parent releases the shared memory and displays "End of Program."
+
 System Requirements
 
 Operating System: Linux
