@@ -6,9 +6,10 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <semaphore.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #define SHM_KEY 12345 // Shared memory key
-#define SEM_KEY 12346  // Semaphore key
 
 void process1(int *total) {
     for (int i = 0; i < 100000; i++) {
@@ -41,7 +42,7 @@ void process4(int *total) {
 int main() {
     int shmid;
     int *total;
-    
+
     // Create shared memory segment
     shmid = shmget(SHM_KEY, sizeof(int), IPC_CREAT | 0666);
     if (shmid < 0) {
@@ -58,27 +59,47 @@ int main() {
 
     *total = 0; // Initialize shared memory
 
-    // Create a semaphore for synchronization
-    sem_t *sem = sem_open("/my_semaphore", O_CREAT, 0644, 1);
-    if (sem == SEM_FAILED) {
+    // Create semaphores for synchronization
+    sem_t *sem1 = sem_open("sem1", O_CREAT, 0644, 0);
+    sem_t *sem2 = sem_open("sem2", O_CREAT, 0644, 0);
+    sem_t *sem3 = sem_open("sem3", O_CREAT, 0644, 0);
+
+    if (sem1 == SEM_FAILED || sem2 == SEM_FAILED || sem3 == SEM_FAILED) {
         perror("sem_open failed");
         exit(1);
     }
 
     // Create 4 child processes
     pid_t pids[4];
-    for (int i = 0; i < 4; i++) {
-        pids[i] = fork();
-        if (pids[i] == 0) {
-            // Child process
-            for (int j = 0; j < (i + 1) * 100000; j++) {
-                sem_wait(sem); // Wait for the semaphore
-                (*total)++;    // Critical section
-                sem_post(sem); // Signal the semaphore
-            }
-            printf("From Process %d: counter = %d.\n", i + 1, *total);
-            exit(0);
-        }
+    pids[0] = fork();
+    if (pids[0] == 0) {
+        // Process 1
+        process1(total);
+        sem_post(sem1); // Signal process 2
+        exit(0);
+    }
+
+    pids[1] = fork();
+    if (pids[1] == 0) {
+        sem_wait(sem1); // Wait for process 1 to finish
+        process2(total);
+        sem_post(sem2); // Signal process 3
+        exit(0);
+    }
+
+    pids[2] = fork();
+    if (pids[2] == 0) {
+        sem_wait(sem2); // Wait for process 2 to finish
+        process3(total);
+        sem_post(sem3); // Signal process 4
+        exit(0);
+    }
+
+    pids[3] = fork();
+    if (pids[3] == 0) {
+        sem_wait(sem3); // Wait for process 3 to finish
+        process4(total);
+        exit(0);
     }
 
     // Parent process waits for each child to finish
@@ -88,16 +109,24 @@ int main() {
         printf("Child with ID: %d has just exited.\n", child_pid);
     }
 
+    // Final output of total
+    printf("Final total counter = %d.\n", *total);
+
+    // Close and unlink semaphores
+    sem_close(sem1);
+    sem_close(sem2);
+    sem_close(sem3);
+    sem_unlink("sem1");
+    sem_unlink("sem2");
+    sem_unlink("sem3");
+
     // Detach and remove the shared memory
     shmdt(total);
     shmctl(shmid, IPC_RMID, NULL);
-    
-    // Close and unlink the semaphore
-    sem_close(sem);
-    sem_unlink("/my_semaphore");
 
     printf("End of Program.\n");
 
     return 0;
 }
+
 
