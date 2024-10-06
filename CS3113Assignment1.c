@@ -11,28 +11,40 @@
 
 #define SHM_KEY 12345 // Shared memory key
 
-void process1(int *total) {
+void process1(int *total, sem_t *sem) {
     for (int i = 0; i < 100000; i++) {
+        sem_wait(sem); // Wait for access to critical section
         (*total)++;
+        sem_post(sem); // Signal that the critical section is free
     }
+    printf("From Process 1: counter = %d.\n", *total);
 }
 
-void process2(int *total) {
+void process2(int *total, sem_t *sem) {
     for (int i = 0; i < 200000; i++) {
+        sem_wait(sem); // Wait for access to critical section
         (*total)++;
+        sem_post(sem); // Signal that the critical section is free
     }
+    printf("From Process 2: counter = %d.\n", *total);
 }
 
-void process3(int *total) {
+void process3(int *total, sem_t *sem) {
     for (int i = 0; i < 300000; i++) {
+        sem_wait(sem); // Wait for access to critical section
         (*total)++;
+        sem_post(sem); // Signal that the critical section is free
     }
+    printf("From Process 3: counter = %d.\n", *total);
 }
 
-void process4(int *total) {
+void process4(int *total, sem_t *sem) {
     for (int i = 0; i < 500000; i++) {
+        sem_wait(sem); // Wait for access to critical section
         (*total)++;
+        sem_post(sem); // Signal that the critical section is free
     }
+    printf("From Process 4: counter = %d.\n", *total);
 }
 
 int main() {
@@ -55,12 +67,10 @@ int main() {
 
     *total = 0; // Initialize shared memory
 
-    // Create semaphores for synchronization
-    sem_t *sem1 = sem_open("sem1", O_CREAT, 0644, 0);
-    sem_t *sem2 = sem_open("sem2", O_CREAT, 0644, 0);
-    sem_t *sem3 = sem_open("sem3", O_CREAT, 0644, 0);
+    // Create semaphore for synchronization
+    sem_t *sem = sem_open("sem", O_CREAT, 0644, 1); // Initialize semaphore with value 1
 
-    if (sem1 == SEM_FAILED || sem2 == SEM_FAILED || sem3 == SEM_FAILED) {
+    if (sem == SEM_FAILED) {
         perror("sem_open failed");
         exit(1);
     }
@@ -70,35 +80,25 @@ int main() {
 
     pids[0] = fork();
     if (pids[0] == 0) {
-        process1(total);
-        printf("From Process 1: counter = %d.\n", *total);
-        sem_post(sem1); // Signal process 2
+        process1(total, sem);
         exit(0);
     }
 
     pids[1] = fork();
     if (pids[1] == 0) {
-        sem_wait(sem1); // Wait for process 1 to finish
-        process2(total);
-        printf("From Process 2: counter = %d.\n", *total);
-        sem_post(sem2); // Signal process 3
+        process2(total, sem);
         exit(0);
     }
 
     pids[2] = fork();
     if (pids[2] == 0) {
-        sem_wait(sem2); // Wait for process 2 to finish
-        process3(total);
-        printf("From Process 3: counter = %d.\n", *total);
-        sem_post(sem3); // Signal process 4
+        process3(total, sem);
         exit(0);
     }
 
     pids[3] = fork();
     if (pids[3] == 0) {
-        sem_wait(sem3); // Wait for process 3 to finish
-        process4(total);
-        printf("From Process 4: counter = %d.\n", *total);
+        process4(total, sem);
         exit(0);
     }
 
@@ -116,16 +116,13 @@ int main() {
     shmdt(total);
     shmctl(shmid, IPC_RMID, NULL);
 
-    // Close and unlink semaphores
-    sem_close(sem1);
-    sem_close(sem2);
-    sem_close(sem3);
-    sem_unlink("sem1");
-    sem_unlink("sem2");
-    sem_unlink("sem3");
+    // Close and unlink semaphore
+    sem_close(sem);
+    sem_unlink("sem");
 
     printf("End of Simulation.\n");
 
     return 0;
 }
+
 
