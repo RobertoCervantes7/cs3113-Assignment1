@@ -30,7 +30,7 @@ void process3(int *total) {
 }
 
 void process4(int *total) {
-    for (int i = 0; i < 500000 - 400000; i++) {
+    for (int i = 0; i < 500000 - 300000; i++) {
         (*total)++;
     }
 }
