@@ -1,3 +1,6 @@
+// Your Name: Roberto Cervantes
+// Username: cs017
+
 #include <stdio.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -11,8 +14,6 @@
 
 #define SHM_KEY 12345 // Shared memory key
 
-// Your Name: Roberto Cervantes
-// Username: [Your Username Here]
 
 void process1(int *total) {
     for (int i = 0; i < 100000; i++) {
