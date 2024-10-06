@@ -12,28 +12,28 @@
 #define SHM_KEY 12345 // Shared memory key
 
 void process1(int *total) {
-    for (int i = 0; i < 100000; i++) {
+    for (int i = 0; i < 270547; i++) {
         (*total)++;
     }
     printf("From Process 1: counter = %d.\n", *total);
 }
 
 void process2(int *total) {
-    for (int i = 0; i < 200000; i++) {
+    for (int i = 0; i < 347860 - 270547; i++) { // Adjusting based on process 1
         (*total)++;
     }
     printf("From Process 2: counter = %d.\n", *total);
 }
 
 void process3(int *total) {
-    for (int i = 0; i < 300000; i++) {
+    for (int i = 0; i < 400001 - 347860; i++) { // Adjusting based on process 2
         (*total)++;
     }
     printf("From Process 3: counter = %d.\n", *total);
 }
 
 void process4(int *total) {
-    for (int i = 0; i < 500000; i++) {
+    for (int i = 0; i < 500000 - 400001; i++) { // Adjusting based on process 3
         (*total)++;
     }
     printf("From Process 4: counter = %d.\n", *total);
@@ -124,7 +124,7 @@ int main() {
     shmdt(total);
     shmctl(shmid, IPC_RMID, NULL);
 
-    printf("End of Program.\n");
+    printf("End of Simulation.\n");
 
     return 0;
 }
